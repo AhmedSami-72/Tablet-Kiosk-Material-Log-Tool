@@ -1,0 +1,829 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
+    <meta name="description" content="نظام تسجيل المواد والأدوات للموظفين - يعمل دون اتصال بالإنترنت">
+    <title>نظام تسجيل العمليات | المواد والأدوات</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            user-select: none; /* تحسين للكشك */
+        }
+
+        body {
+            font-family: 'Segoe UI', 'Tahoma', system-ui, -apple-system, sans-serif;
+            background: #f0f4f8;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        /* حاوية رئيسية */
+        .app-container {
+            max-width: 1280px;
+            width: 100%;
+            margin: 0 auto;
+            background: white;
+            border-radius: 48px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+            overflow: hidden;
+            transition: all 0.2s;
+        }
+
+        /* شاشة PIN */
+        .pin-screen {
+            background: white;
+            padding: 40px 24px 48px;
+            text-align: center;
+            border-radius: 48px;
+        }
+
+        .pin-title {
+            font-size: 2.2rem;
+            font-weight: 700;
+            margin-bottom: 24px;
+            color: #1e293b;
+        }
+
+        .pin-display {
+            background: #f1f5f9;
+            font-size: 2.5rem;
+            letter-spacing: 12px;
+            padding: 16px;
+            border-radius: 32px;
+            font-family: monospace;
+            margin-bottom: 32px;
+            font-weight: bold;
+            color: #0f172a;
+        }
+
+        .pin-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 16px;
+            max-width: 360px;
+            margin: 0 auto 24px;
+        }
+
+        .pin-btn {
+            background: #e2e8f0;
+            border: none;
+            font-size: 2rem;
+            padding: 20px;
+            border-radius: 60px;
+            font-weight: bold;
+            transition: 0.1s;
+            cursor: pointer;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+        }
+
+        .pin-btn:active { transform: scale(0.96); background: #cbd5e1; }
+        .pin-clear { background: #fee2e2; color: #b91c1c; }
+        .pin-enter { background: #10b981; color: white; }
+
+        /* المحتوى الرئيسي (يظهر بعد فتح القفل) */
+        .main-content {
+            display: none;
+        }
+
+        /* رؤوس وأزرار */
+        .header-bar {
+            background: #0f172a;
+            color: white;
+            padding: 20px 28px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        .logo-area h2 {
+            font-size: 1.5rem;
+            font-weight: 600;
+        }
+
+        .sync-status {
+            background: #334155;
+            padding: 6px 14px;
+            border-radius: 60px;
+            font-size: 0.85rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .home-btn {
+            background: #d4af37;
+            border: none;
+            color: #0f172a;
+            font-size: 1.2rem;
+            font-weight: bold;
+            padding: 8px 20px;
+            border-radius: 40px;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+
+        .home-btn:active { transform: scale(0.96); }
+
+        /* حاوية الصفحات */
+        .screen {
+            padding: 32px 28px;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        /* تصميم البطاقات والأزرار الكبيرة */
+        .employee-select {
+            margin-bottom: 40px;
+        }
+
+        .employee-select label {
+            display: block;
+            font-size: 1.3rem;
+            font-weight: 600;
+            margin-bottom: 12px;
+            color: #1e293b;
+        }
+
+        select {
+            width: 100%;
+            padding: 18px 20px;
+            font-size: 1.3rem;
+            border-radius: 32px;
+            border: 2px solid #e2e8f0;
+            background: white;
+            font-family: inherit;
+            cursor: pointer;
+        }
+
+        .op-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 20px;
+            margin-top: 28px;
+        }
+
+        .op-btn {
+            background: #f8fafc;
+            border: 2px solid #e2e8f0;
+            padding: 28px 12px;
+            font-size: 1.5rem;
+            font-weight: 700;
+            border-radius: 40px;
+            transition: all 0.2s;
+            cursor: pointer;
+            text-align: center;
+            color: #0f172a;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.02);
+        }
+
+        .op-btn:active { transform: scale(0.97); background: #eef2ff; border-color: #d4af37; }
+
+        /* قائمة العناصر (مواد/أدوات) */
+        .items-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 24px;
+            margin-top: 28px;
+        }
+
+        .item-card {
+            background: #ffffff;
+            border-radius: 32px;
+            padding: 18px 20px 20px;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.05);
+            border: 1px solid #eef2ff;
+            transition: 0.1s;
+        }
+
+        .item-name {
+            font-size: 1.6rem;
+            font-weight: 700;
+            margin-bottom: 16px;
+            color: #0f172a;
+            text-align: center;
+        }
+
+        .quantity-control {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 16px;
+            margin-bottom: 20px;
+        }
+
+        .qty-btn {
+            background: #e2e8f0;
+            border: none;
+            width: 52px;
+            height: 52px;
+            border-radius: 60px;
+            font-size: 1.8rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: 0.1s;
+        }
+
+        .qty-btn:active { background: #cbd5e1; }
+        .qty-value {
+            font-size: 1.8rem;
+            font-weight: 700;
+            min-width: 70px;
+            text-align: center;
+        }
+        input.qty-input {
+            width: 80px;
+            font-size: 1.5rem;
+            text-align: center;
+            border: 1px solid #cbd5e1;
+            border-radius: 28px;
+            padding: 8px;
+        }
+
+        .record-btn {
+            background: #d4af37;
+            width: 100%;
+            border: none;
+            padding: 14px;
+            border-radius: 60px;
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: #0f172a;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+
+        .record-btn:active { transform: scale(0.97); background: #caae34; }
+
+        .back-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            gap: 12px;
+            background: #f1f5f9;
+            padding: 16px 20px;
+            border-radius: 60px;
+        }
+
+        .employee-badge {
+            font-weight: 700;
+            background: #0f172a;
+            color: white;
+            padding: 6px 18px;
+            border-radius: 40px;
+        }
+
+        .toast {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #1e293b;
+            color: white;
+            padding: 12px 28px;
+            border-radius: 60px;
+            font-size: 1.1rem;
+            z-index: 1000;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.2);
+            direction: rtl;
+            white-space: nowrap;
+        }
+
+        @media (max-width: 768px) {
+            .items-grid { grid-template-columns: 1fr; }
+            .op-btn { padding: 20px; font-size: 1.2rem; }
+            .item-name { font-size: 1.3rem; }
+        }
+        footer {
+            text-align: center;
+            padding: 12px;
+            font-size: 0.75rem;
+            color: #64748b;
+            background: #f8fafc;
+        }
+        button {
+            font-family: inherit;
+        }
+    </style>
+</head>
+<body>
+<div class="app-container" id="appContainer">
+    <!-- شاشة PIN (القفل) -->
+    <div id="pinScreen" class="pin-screen">
+        <div class="pin-title">🔒 رمز الدخول</div>
+        <div class="pin-display" id="pinDisplay">____</div>
+        <div class="pin-grid" id="pinButtonsGrid"></div>
+        <button id="clearPinBtn" class="pin-btn pin-clear">مسح</button>
+        <button id="enterPinBtn" class="pin-btn pin-enter">دخول</button>
+        <p style="margin-top: 24px; font-size: 0.8rem; color: #475569;">*الرمز الافتراضي: 1234</p>
+    </div>
+
+    <!-- المحتوى الرئيسي بعد فتح القفل -->
+    <div id="mainContent" class="main-content">
+        <div class="header-bar">
+            <div class="logo-area">
+                <h2>📋 نظام تسجيل العمليات</h2>
+            </div>
+            <div class="sync-status" id="syncStatusBadge">
+                <span>🟢 متصل</span>
+            </div>
+            <button id="globalHomeBtn" class="home-btn">🏠 الرئيسية</button>
+        </div>
+
+        <!-- شاشة البداية (اختيار الموظف + نوع العملية) -->
+        <div id="homeScreen" class="screen">
+            <div class="employee-select">
+                <label>👤 اسم الموظف</label>
+                <select id="employeeSelect"></select>
+            </div>
+            <div style="margin-top: 20px;">
+                <h3 style="margin-bottom: 16px;">اختر نوع العملية</h3>
+                <div class="op-grid" id="operationsGrid"></div>
+            </div>
+        </div>
+
+        <!-- شاشة عرض العناصر حسب العملية -->
+        <div id="itemsScreen" class="screen hidden">
+            <div class="back-info">
+                <span class="employee-badge" id="currentEmployeeName"></span>
+                <span style="font-weight: bold;" id="currentOpTypeLabel"></span>
+                <button id="backToHomeFromItems" class="home-btn" style="background:#94a3b8; color:white;">↩️ عودة</button>
+            </div>
+            <div id="dynamicItemsList" class="items-grid"></div>
+        </div>
+        <footer>نظام داخلي - يعمل دون اتصال | مزامنة تلقائية</footer>
+    </div>
+</div>
+
+<script>
+    // ======================= التكوينات الرئيسية (سهلة التعديل) =======================
+    const CONFIG = {
+        // رمز PIN البسيط
+        APP_PIN: "1234",
+        // عنوان Google Apps Script (يجب استبداله بالرابط الحقيقي)
+        GOOGLE_SHEETS_API_URL: "https://script.google.com/macros/s/REPLACE_WITH_YOUR_DEPLOY_ID/exec",
+        
+        // قائمة الموظفين
+        employees: [
+            "أحمد السيد",
+            "محمد علي",
+            "سالم راشد",
+            "خالد عبدالله",
+            "نورهان سمير"
+        ],
+        
+        // المواد الأساسية (لمادة بديلة)
+        materials: [
+            "ملمع تابلوه", "فوم", "جنوط", "منظف زجاج", "سائل جلي", "معطر جو", "كلوركس"
+        ],
+        
+        // الأدوات البديلة
+        tools: [
+            "فوط", "جركن", "بخاخ", "ممسحة", "فرشاة", "سكوتش", "قفازات"
+        ],
+        
+        // مفقودات
+        missing_items: [
+            "قطعة غيار", "أداة صغيرة", "براغي", "مفك", "قفازات", "شاحن", "بطارية"
+        ]
+    };
+    
+    // دمج المواد والأدوات لـ "استلام باكدج"
+    const getPackageItems = () => [...CONFIG.materials, ...CONFIG.tools];
+    
+    // ربط أنواع العمليات بقوائم العناصر
+    const operationItemsMap = {
+        "استلام باكدج": () => getPackageItems(),
+        "استلام مادة بديلة": () => [...CONFIG.materials],
+        "استلام أدوات بديلة": () => [...CONFIG.tools],
+        "مفقودات": () => [...CONFIG.missing_items]
+    };
+    
+    // عناوين العمليات (عرض)
+    const operationTypesList = ["استلام باكدج", "استلام مادة بديلة", "استلام أدوات بديلة", "مفقودات"];
+    
+    // ---------- المتغيرات العامة ----------
+    let currentOperation = null;          // العملية المختارة حالياً
+    let selectedEmployee = "";            // الموظف الحالي (من القائمة)
+    let idleTimer = null;
+    let resetTimer = null;                // مؤقت إعادة التعيين بعد الحفظ
+    let pendingSync = false;              // لمنع التكرار
+    let db = null;                        // IndexedDB connection
+    let isOnline = navigator.onLine;
+    
+    // DOM elements
+    const pinScreenDiv = document.getElementById('pinScreen');
+    const mainContentDiv = document.getElementById('mainContent');
+    const homeScreenDiv = document.getElementById('homeScreen');
+    const itemsScreenDiv = document.getElementById('itemsScreen');
+    const employeeSelect = document.getElementById('employeeSelect');
+    const operationsGrid = document.getElementById('operationsGrid');
+    const dynamicItemsList = document.getElementById('dynamicItemsList');
+    const currentEmployeeNameSpan = document.getElementById('currentEmployeeName');
+    const currentOpTypeLabel = document.getElementById('currentOpTypeLabel');
+    const backToHomeBtn = document.getElementById('backToHomeFromItems');
+    const globalHomeBtn = document.getElementById('globalHomeBtn');
+    const syncStatusBadge = document.getElementById('syncStatusBadge');
+    
+    // ======================= 1. PIN LOCK SYSTEM =======================
+    let enteredPin = "";
+    function renderPinPad() {
+        const grid = document.getElementById('pinButtonsGrid');
+        grid.innerHTML = '';
+        for(let i=1; i<=9; i++) {
+            const btn = document.createElement('button');
+            btn.textContent = i;
+            btn.className = 'pin-btn';
+            btn.addEventListener('click', () => { enteredPin += i; updatePinDisplay(); });
+            grid.appendChild(btn);
+        }
+        const zeroBtn = document.createElement('button');
+        zeroBtn.textContent = '0';
+        zeroBtn.className = 'pin-btn';
+        zeroBtn.addEventListener('click', () => { enteredPin += '0'; updatePinDisplay(); });
+        grid.appendChild(zeroBtn);
+        // زر فارغ للشكل
+        const empty = document.createElement('button');
+        empty.style.visibility = 'hidden';
+        empty.className = 'pin-btn';
+        grid.appendChild(empty);
+    }
+    function updatePinDisplay() {
+        const display = document.getElementById('pinDisplay');
+        let masked = '';
+        for(let i=0; i<enteredPin.length; i++) masked += '•';
+        while(masked.length < 4) masked += '_';
+        display.innerText = masked;
+    }
+    function clearPin() { enteredPin = ""; updatePinDisplay(); }
+    function verifyPin() {
+        if(enteredPin === CONFIG.APP_PIN) {
+            // فتح التطبيق
+            pinScreenDiv.style.display = 'none';
+            mainContentDiv.style.display = 'block';
+            initApp(); // تهيئة القوائم والمزامنة
+        } else {
+            alert("رمز خاطئ 🔐 الرقم الافتراضي: 1234");
+            clearPin();
+        }
+    }
+    
+    // ======================= 2. IndexedDB (للتخزين دون اتصال) =======================
+    function initDB() {
+        return new Promise((resolve, reject) => {
+            const request = indexedDB.open("MaterialLogDB", 1);
+            request.onerror = () => reject("IndexedDB failed");
+            request.onsuccess = (e) => {
+                db = e.target.result;
+                resolve(db);
+            };
+            request.onupgradeneeded = (e) => {
+                const dbRef = e.target.result;
+                if(!dbRef.objectStoreNames.contains("pendingOps")) {
+                    const store = dbRef.createObjectStore("pendingOps", { autoIncrement: true });
+                    store.createIndex("timestamp", "timestamp");
+                }
+            };
+        });
+    }
+    
+    async function addToPendingQueue(record) {
+        if(!db) await initDB();
+        return new Promise((resolve, reject) => {
+            const tx = db.transaction(["pendingOps"], "readwrite");
+            const store = tx.objectStore("pendingOps");
+            const req = store.add({ ...record, synced: false });
+            req.onsuccess = () => resolve();
+            req.onerror = (e) => reject(e);
+        });
+    }
+    
+    async function getAllPending() {
+        if(!db) await initDB();
+        return new Promise((resolve) => {
+            const tx = db.transaction(["pendingOps"], "readonly");
+            const store = tx.objectStore("pendingOps");
+            const all = [];
+            store.openCursor().onsuccess = (e) => {
+                const cursor = e.target.result;
+                if(cursor) {
+                    all.push({ id: cursor.key, data: cursor.value });
+                    cursor.continue();
+                } else resolve(all);
+            };
+        });
+    }
+    
+    async function deletePendingById(id) {
+        if(!db) await initDB();
+        return new Promise((resolve) => {
+            const tx = db.transaction(["pendingOps"], "readwrite");
+            tx.objectStore("pendingOps").delete(id);
+            tx.oncomplete = () => resolve();
+        });
+    }
+    
+    // ======================= 3. الاتصال بـ Google Sheets (API) =======================
+    async function sendToGoogleSheets(record) {
+        const payload = {
+            employee: record.employee,
+            operation_type: record.operation_type,
+            item: record.item,
+            quantity: record.quantity,
+            timestamp: record.timestamp
+        };
+        try {
+            const response = await fetch(CONFIG.GOOGLE_SHEETS_API_URL, {
+                method: 'POST',
+                mode: 'no-cors',   // للتجاوب مع apps script بسيط (إذا لم يكن CORS معقد)
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            // بسبب no-cors لا يمكن قراءة response, نعتبره نجاح نسبي (يفضل استخدام وضع cors مع script مهيأ)
+            return { success: true };
+        } catch(err) {
+            console.warn("فشل الإرسال المباشر", err);
+            return { success: false, error: err };
+        }
+    }
+    
+    // محاولة إرسال عملية واحدة (إذا أونلاين)
+    async function trySyncSingle(entry) {
+        if(!isOnline) return false;
+        const result = await sendToGoogleSheets(entry.data);
+        if(result.success) {
+            await deletePendingById(entry.id);
+            return true;
+        }
+        return false;
+    }
+    
+    // مزامنة كل العمليات المعلقة
+    async function syncAllPending() {
+        if(!isOnline) return;
+        const pendingList = await getAllPending();
+        if(pendingList.length === 0) return;
+        updateSyncStatus(`🔄 جاري المزامنة (${pendingList.length})`);
+        let syncedCount = 0;
+        for(const entry of pendingList) {
+            const ok = await trySyncSingle(entry);
+            if(ok) syncedCount++;
+            // ننتظر قليلاً بين الطلبات
+            await new Promise(r => setTimeout(r, 300));
+        }
+        if(syncedCount > 0) showToast(`✅ تمت مزامنة ${syncedCount} عملية`);
+        updateSyncStatus(isOnline ? "🟢 متصل" : "🔴 غير متصل");
+    }
+    
+    // ======================= 4. عملية تسجيل العملية (حفظ محلياً أو إرسال) =======================
+    async function saveOperation(employee, operationType, item, quantity) {
+        if(!employee) { showToast("⚠️ يرجى اختيار الموظف"); return false; }
+        if(!operationType) { showToast("⚠️ يرجى اختيار نوع العملية"); return false; }
+        const record = {
+            employee: employee,
+            operation_type: operationType,
+            item: item,
+            quantity: quantity,
+            timestamp: new Date().toISOString()
+        };
+        
+        // إذا كان متصل نحاول الإرسال المباشر
+        if(isOnline) {
+            const result = await sendToGoogleSheets(record);
+            if(result.success) {
+                showToast(`✅ تم تسجيل: ${item} (${quantity})`);
+                return true;
+            } else {
+                // فشل الإرسال رغم الاتصال -> نخزنه محلياً
+                await addToPendingQueue(record);
+                showToast(`📱 تم حفظ محلياً (غير متزامن)`, 2500);
+                return true;
+            }
+        } else {
+            // وضع عدم الاتصال
+            await addToPendingQueue(record);
+            showToast(`📴 تم حفظ بدون اتصال - سيتم المزامنة لاحقاً`, 2500);
+            return true;
+        }
+    }
+    
+    // ======================= 5. عرض العناصر حسب العملية =======================
+    function renderItemsForOperation(operation) {
+        const itemsArray = operationItemsMap[operation] ? operationItemsMap[operation]() : [];
+        if(itemsArray.length === 0) {
+            dynamicItemsList.innerHTML = `<div style="text-align:center; padding:40px;">لا توجد عناصر لهذه العملية</div>`;
+            return;
+        }
+        dynamicItemsList.innerHTML = "";
+        itemsArray.forEach(item => {
+            const card = document.createElement('div');
+            card.className = 'item-card';
+            let quantityValue = 1;
+            // إنشاء عنصر التحكم بالكمية
+            const qtyContainer = document.createElement('div');
+            qtyContainer.className = 'quantity-control';
+            const minusBtn = document.createElement('button');
+            minusBtn.textContent = '−';
+            minusBtn.className = 'qty-btn';
+            const qtySpan = document.createElement('span');
+            qtySpan.className = 'qty-value';
+            qtySpan.textContent = quantityValue;
+            const plusBtn = document.createElement('button');
+            plusBtn.textContent = '+';
+            plusBtn.className = 'qty-btn';
+            
+            const updateQuantity = (newVal) => {
+                if(newVal < 1) newVal = 1;
+                quantityValue = newVal;
+                qtySpan.textContent = quantityValue;
+            };
+            minusBtn.addEventListener('click', (e) => { e.stopPropagation(); updateQuantity(quantityValue - 1); });
+            plusBtn.addEventListener('click', (e) => { e.stopPropagation(); updateQuantity(quantityValue + 1); });
+            qtyContainer.appendChild(minusBtn);
+            qtyContainer.appendChild(qtySpan);
+            qtyContainer.appendChild(plusBtn);
+            
+            const recordBtn = document.createElement('button');
+            recordBtn.className = 'record-btn';
+            recordBtn.innerHTML = '📝 تسجيل ✨';
+            recordBtn.addEventListener('click', async (e) => {
+                e.stopPropagation();
+                if(resetTimer) clearTimeout(resetTimer);
+                const emp = selectedEmployee || employeeSelect.value;
+                if(!emp) { showToast("يرجى اختيار الموظف أولا"); return; }
+                // تسجيل العملية
+                const success = await saveOperation(emp, currentOperation, item, quantityValue);
+                if(success) {
+                    // إعادة تعيين تلقائي للشاشة الرئيسية بعد 2.5 ثانية
+                    if(resetTimer) clearTimeout(resetTimer);
+                    resetTimer = setTimeout(() => {
+                        resetToHomeScreen(true);
+                    }, 2500);
+                }
+            });
+            card.innerHTML = `<div class="item-name">${item}</div>`;
+            card.appendChild(qtyContainer);
+            card.appendChild(recordBtn);
+            dynamicItemsList.appendChild(card);
+        });
+    }
+    
+    // ======================= 6. تبديل الشاشات وإعادة التعيين =======================
+    function showHomeScreen() {
+        homeScreenDiv.classList.remove('hidden');
+        itemsScreenDiv.classList.add('hidden');
+        currentOperation = null;
+        // إعادة تعيين أي مؤقتات
+        if(resetTimer) clearTimeout(resetTimer);
+        resetIdleTimer(); // إعادة تعيين idle
+    }
+    
+    function showItemsScreen(operation) {
+        if(!operation) return;
+        if(!selectedEmployee) {
+            const empVal = employeeSelect.value;
+            if(empVal) selectedEmployee = empVal;
+            else { showToast("الرجاء اختيار موظف أولاً"); return; }
+        }
+        currentOperation = operation;
+        currentEmployeeNameSpan.innerText = selectedEmployee;
+        currentOpTypeLabel.innerText = `📌 ${operation}`;
+        // تحميل العناصر الخاصة بالعملية
+        renderItemsForOperation(operation);
+        homeScreenDiv.classList.add('hidden');
+        itemsScreenDiv.classList.remove('hidden');
+        resetIdleTimer();
+    }
+    
+    function resetToHomeScreen(showMessage = false) {
+        if(resetTimer) clearTimeout(resetTimer);
+        showHomeScreen();
+        if(showMessage) showToast("🏠 تم العودة للشاشة الرئيسية", 1500);
+        // إعادة ضبط أي اختيار للعملية
+        currentOperation = null;
+        resetIdleTimer();
+    }
+    
+    // مؤقت الخمول (30 ثانية)
+    function resetIdleTimer() {
+        if(idleTimer) clearTimeout(idleTimer);
+        idleTimer = setTimeout(() => {
+            // إعادة تعيين للشاشة الرئيسية إذا لم تكن بالفعل في home
+            if(!homeScreenDiv.classList.contains('hidden') === false || itemsScreenDiv.classList.contains('hidden') === false) {
+                resetToHomeScreen(true);
+                showToast("⏳ خمول 30 ثانية - تم العودة للرئيسية", 1800);
+            } else {
+                // بالفعل في الهوم نضمن فقط إعادة الوضع
+                if(currentOperation) currentOperation = null;
+            }
+        }, 30000);
+    }
+    
+    // إعادة ضبط idle عند أي تفاعل مستخدم (على مستوى التطبيق)
+    function bindIdleEvents() {
+        const events = ['click', 'touchstart', 'mousemove', 'keydown'];
+        events.forEach(ev => {
+            document.body.addEventListener(ev, () => resetIdleTimer(), { passive: true });
+        });
+    }
+    
+    // ======================= 7. بناء واجهة المستخدم الأولية =======================
+    function buildUI() {
+        // ملء قائمة الموظفين
+        employeeSelect.innerHTML = '<option value="">-- اختر الموظف --</option>';
+        CONFIG.employees.forEach(emp => {
+            const option = document.createElement('option');
+            option.value = emp;
+            option.textContent = emp;
+            employeeSelect.appendChild(option);
+        });
+        employeeSelect.addEventListener('change', (e) => {
+            selectedEmployee = e.target.value;
+            resetIdleTimer();
+        });
+        
+        // أزرار العمليات
+        operationsGrid.innerHTML = "";
+        operationTypesList.forEach(op => {
+            const btn = document.createElement('div');
+            btn.className = 'op-btn';
+            btn.textContent = op;
+            btn.addEventListener('click', () => {
+                if(!employeeSelect.value) { showToast("⚠️ اختر الموظف أولاً"); return; }
+                selectedEmployee = employeeSelect.value;
+                showItemsScreen(op);
+            });
+            operationsGrid.appendChild(btn);
+        });
+        
+        // رجوع للأزرار
+        backToHomeBtn.addEventListener('click', () => resetToHomeScreen(false));
+        globalHomeBtn.addEventListener('click', () => resetToHomeScreen(false));
+    }
+    
+    // ======================= 8. حالة الاتصال ومزامنة تلقائية =======================
+    function updateSyncStatus(msg) {
+        if(syncStatusBadge) syncStatusBadge.innerHTML = `<span>${msg}</span>`;
+    }
+    function handleNetworkChange() {
+        isOnline = navigator.onLine;
+        updateSyncStatus(isOnline ? "🟢 متصل" : "🔴 غير متصل");
+        if(isOnline) {
+            syncAllPending();
+        }
+    }
+    function showToast(msg, duration = 2000) {
+        let existingToast = document.querySelector('.toast');
+        if(existingToast) existingToast.remove();
+        const toast = document.createElement('div');
+        toast.className = 'toast';
+        toast.textContent = msg;
+        document.body.appendChild(toast);
+        setTimeout(() => toast.remove(), duration);
+    }
+    
+    // ======================= 9. تهيئة التطبيق بعد PIN =======================
+    async function initApp() {
+        await initDB();
+        buildUI();
+        showHomeScreen();
+        // مزامنة أولية فتح التطبيق
+        handleNetworkChange();
+        window.addEventListener('online', () => { isOnline = true; handleNetworkChange(); });
+        window.addEventListener('offline', () => { isOnline = false; handleNetworkChange(); });
+        bindIdleEvents();
+        resetIdleTimer();
+        // في حالة اتصال أولي، محاولة مزامنة كل البيانات
+        setTimeout(() => syncAllPending(), 800);
+    }
+    
+    // ======================= 10. تحضير PIN والأحداث =======================
+    function setupPinModule() {
+        renderPinPad();
+        document.getElementById('clearPinBtn').addEventListener('click', clearPin);
+        document.getElementById('enterPinBtn').addEventListener('click', verifyPin);
+    }
+    
+    // بدء تشغيل النظام
+    setupPinModule();
+    // إخفاء المحتوى الرئيسي مبدئياً
+    mainContentDiv.style.display = 'none';
+    pinScreenDiv.style.display = 'block';
+</script>
+</body>
+</html>
